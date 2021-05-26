@@ -39,29 +39,6 @@ from pathlib import Path
 import pyfiglet
 
 
-'''
-gcn_spectraledge    : https://github.com/bknyaz/examples -- working 
-
-gcn_spectral: https://github.com/bknyaz/examples -- working 
-
-gcn : https://github.com/tkipf/pygcn -- working 
-
-gat : https://github.com/Diego999/pyGAT --  working 
-
-sp_gat : https://github.com/Diego999/pyGAT -- working 
-
-graph_sage_sup : https://github.com/dsgiitr/graph_nets -- working
-
-gwnn :https://github.com/Yanqi-Chen/GWNN  --working 
-
-fastgcn : https://github.com/quqixun/GNN-Pytorch -- default
-https://github.com/Gkunnan97/FastGCN_pytorch --working
-
-graph_sage_sup : https://github.com/dsgiitr/graph_nets -- working
-
-'''
-
-
 #### Logging of the data into the txt file 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -140,7 +117,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="GNN architectures")
     parser.add_argument('--config_path', action='store_true',\
-    default='E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\FastGCN\\config\\fastgcn_pubmed.yaml', help='Provide the config path')
+    default='.\\config\\fastgcn_pubmed.yaml', help='Provide the config path')
 
 
     #### to create an inc of directory when running test and saving results 

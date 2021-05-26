@@ -42,26 +42,6 @@ import pyfiglet
 
 
 
-
-
-'''
-gcn_spectraledge    : https://github.com/bknyaz/examples -- working 
-
-gcn_spectral: https://github.com/bknyaz/examples -- working 
-
-gcn : https://github.com/tkipf/pygcn -- working 
-
-gat : https://github.com/Diego999/pyGAT --  working 
-
-sp_gat : https://github.com/Diego999/pyGAT -- working 
-
-graph_sage_sup : https://github.com/dsgiitr/graph_nets -- working
-
-train_gcn_gen : https://github.com/LeeWooJung/GCN_reproduce --working
-
-'''
-
-
 #### Logging of the data into the txt file 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -171,7 +151,7 @@ def main():
 
 
     parser.add_argument('--config_path', action='store_true', \
-    default='E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\GCN\\config\\gcn_cora.yaml', help='Provide the config path')
+    default='.\\config\\gcn_cora.yaml', help='Provide the config path')
 
 
     ####Creation of increment directory for result saving 
