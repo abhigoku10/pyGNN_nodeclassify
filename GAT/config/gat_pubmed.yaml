@@ -1,0 +1,71 @@
+# Config format schema number
+format_version: 4
+
+###################
+## Model options
+model_params:
+  model_architecture: "gat"
+  input_dim: 32
+  hidden: 8
+  dropout: 0.5
+  nb_heads: 8
+  alpha: 0.2
+
+
+###################
+## Dataset options
+dataset_params:
+  dataset_type: "pubmed"
+  save_results: "gat_pubmed/detect"
+
+
+###################
+## Data_loader options
+train_data_loader:
+  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
+  imageset: "train"
+  return_ref: True
+  batch_size: 64
+  shuffle: True
+  num_workers: 1
+
+val_data_loader:
+  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
+  imageset: "val"
+  return_ref: True
+  batch_size: 64
+  shuffle: False
+  num_workers: 1
+
+
+test_data_loader:
+  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
+  imageset: "val"
+  return_ref: True
+  batch_size: 1
+  shuffle: False
+  num_workers: 1
+
+
+###################
+## Train params
+train_params:
+  model_load_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
+  model_save_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
+  checkpoint_every_n_steps: 100
+  max_num_epochs: 800
+  patience: 400
+  lr_rate: 0.0001
+  seed: 42  
+  validationmode: False
+  weight_decay: 0.0005 
+  save_fig: True 
+  save_log: True
+
+###################
+## Test params
+test_params:
+  model_load_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
+  model_save_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
+  output_viz: True
+ 
