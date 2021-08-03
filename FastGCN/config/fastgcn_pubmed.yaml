@@ -1,70 +1,31 @@
-# Config format schema number
-format_version: 4
+---
 
-###################
-## Model options
-model_params:
-  model_architecture: "fastgcn"
-  input_dim: 500
-  hidden: 16
-  dropout: 0.5
-  nb_heads: 2
-  alpha: 0.2
+# -------------------------------------------------------------------
+    Data:         # Use Cora dataset training model
+        datatype:           'pubmed'              # To provide the type of data to load 
+        save_results:       "fastgcn_pubmed/detect"          #provide path to save the results 
+        datapath :          "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC\\src\\dataset\\citation_pre\\"   # to provide dataset loading path 
+        model_save_path:    "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC\\weights"    # To provide the model save path 
+        save_fig:           True    # To save the figure option 
+        output_viz:         True    #  To display the output option         
+# -------------------------------------------------------------------
+    random_state :      42           # random seed
+    gcn :                         # dropedge parameter
+        type :             'fastgcn'               # type of base network 
+        
+    Model :                         # model parameters
+        use_bn :        false          # whether to use batch normalization
+        dropout :       0.5            # dropout ratio
+        input_dim :     500           # node feature dimensions
+        hidden_dim :    16             # hidden layer output characteristic dimension
+        output_dim :    7              # number of nodes category
 
+    Hyper :                         # training hyperparameter
+        LR :            0.001           # optimizer initial learning rate
+        epochs :        8           # training rounds
+        Patience :      400            # stopped early rounds
+        weight_decay : 0.0005         # optimizer weight decay
+        dropout:        0.5                # Dropout parameter 
+        batch_size:   2             # loading data batchsize 
 
-###################
-## Dataset options
-dataset_params:
-  dataset_type: "pubmed"
-  save_results: "fastgcn_pubmed/detect"
-
-
-###################
-## Data_loader options
-train_data_loader:
-  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
-  imageset: "train"
-  return_ref: True
-  batch_size: 64
-  shuffle: True
-  num_workers: 2
-
-val_data_loader:
-  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
-  imageset: "val"
-  return_ref: True
-  batch_size: 64
-  shuffle: False
-  num_workers: 4
-
-
-test_data_loader:
-  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
-  imageset: "val"
-  return_ref: True
-  batch_size: 2
-  shuffle: False
-  num_workers: 4
-
-
-###################
-## Train params
-train_params:
-  model_load_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
-  model_save_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
-  checkpoint_every_n_steps: 100
-  max_num_epochs: 100
-  patience: 50
-  lr_rate: 0.001
-  seed: 42  
-  validationmode: False
-  weight_decay: 0.0005 
-  save_fig: True 
-  save_log: True
-###################
-## Test params
-test_params:
-  model_load_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
-  model_save_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
-  output_viz: True
- 
+...

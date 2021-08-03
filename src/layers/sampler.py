@@ -12,7 +12,8 @@ from scipy.sparse.linalg import norm as sparse_norm
 from torch.nn.parameter import Parameter
 
 
-from ..utils.utils import sparse_mx_to_torch_sparse_tensor 
+
+from ..utils.base_utils import sparse_mx_to_torch_sparse_tensor
 
 
 class Sampler(object):

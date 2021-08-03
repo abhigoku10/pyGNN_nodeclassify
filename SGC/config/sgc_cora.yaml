@@ -1,0 +1,33 @@
+---
+
+
+
+# -------------------------------------------------------------------
+    Data:         # Use Cora dataset training model
+        datatype:           'cora'
+        save_results:       "grand_cora/detect"
+        datapath :          "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC\\src\\dataset\\citation_pre\\"
+        model_save_path:    "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC\\weights"
+        save_fig:           True
+        output_viz:         True        
+# -------------------------------------------------------------------
+    random_state :      42           # random seed
+    grand :                         # GRAND parameter
+        S :             4              # Augmentation
+        K :             5              # Order aggregation times
+        D :             0.5            # DropNode ratio
+        T :             0.5            # Temperature control category distribution
+        L :             1.0            # Consistensy Loss coefficient
+    Model :                         # model parameters
+        use_bn :        false          # whether to use batch normalization
+        dropout :       0.5            # dropout ratio
+        input_dim :     1433           # node feature dimensions
+        hidden_dim :    32             # hidden layer output characteristic dimension
+        output_dim :    7              # number of nodes category
+    Hyper :                         # training hyperparameter
+        LR :            0.001           # optimizer initial learning rate
+        epochs :        500          # training rounds
+        Patience :      800            # stopped early rounds
+        weight_decay : 0.0005         # optimizer weight decay
+
+...

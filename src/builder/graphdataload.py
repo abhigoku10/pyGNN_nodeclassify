@@ -4,11 +4,12 @@ import numpy as np
 import scipy.sparse as sp
 import math
 import pickle as pkl
-import pickle
+
 from sklearn.preprocessing import normalize
 from scipy.sparse.linalg.eigen.arpack import eigsh
 from scipy.special import iv
 from scipy.integrate import quad
+from scipy.sparse import coo_matrix
 import sys
 import os
 sys.path.append(os.getcwd())
@@ -19,10 +20,21 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 ### We import custom functions from other package
+print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__,__name__,str(__package__)))
 
-from ..utils.utils import nontuple_preprocess_features,normalize_adj,nontuple_preprocess_adj
-from ..utils.utils import sparse_mx_to_torch_sparse_tensor
-from ..utils.utils import  adj_list_from_dict ,  add_self_loops
+
+from ..cfg.load_yaml import load_yamlcfg
+
+from ..utils.base_utils import nontuple_preprocess_features,normalize_adj,nontuple_preprocess_adj
+from ..utils.base_utils import sparse_mx_to_torch_sparse_tensor
+from ..utils.base_utils import  adj_list_from_dict ,  add_self_loops
+from ..viz.pyvis_viz import draw_graph3
+
+
+
+
+
+
 
 classnames = {
     'citeseer': ['Agents', 'AI', 'DB', 'IR', 'ML', 'HCI'],
@@ -59,13 +71,6 @@ class Graph_data(Dataset):
         mask[idx] = 1
         return np.array(mask, dtype=np.bool)
 
-    def process_features(self,features):
-        row_sum_diag = np.sum(features, axis=1)
-        row_sum_diag_inv = np.power(row_sum_diag, -1)
-        row_sum_diag_inv[np.isinf(row_sum_diag_inv)] = 0.
-        row_sum_inv = np.diag(row_sum_diag_inv)
-        return np.dot(row_sum_inv, features)
-
     def load_data(self):
         """
         Loads input data from gcn/data directory
@@ -100,6 +105,10 @@ class Graph_data(Dataset):
 
         x, y, tx, ty, allx, ally, graph = tuple(objects)
 
+        
+        # g = nx.to_networkx_graph(graph)
+        # draw_graph3(g,output_filename='graph_output.html', notebook=False)
+
         # test indices
         test_idx_reorder = self.parse_index_file("{}ind.{}.test.index".format(datapath,dataset_str))
         # sort the test index
@@ -116,136 +125,121 @@ class Graph_data(Dataset):
             ty_extended[test_idx_range-min(test_idx_range), :] = ty
             ty = ty_extended
 
+
         features = sp.vstack((allx, tx)).tolil()
         features[test_idx_reorder, :] = features[test_idx_range, :]
 
-
         adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))#.astype(np.float32)
-
-        print("| # of nodes : {}".format(adj.shape[0]))
-        print("| # of edges : {}".format(adj.sum().sum()/2))
 
         ###To obtain degree 
         degree = np.sum(adj, axis=1)
 
-
-
         labels = np.vstack((ally, ty))
-        labels[test_idx_reorder, :] = labels[test_idx_range, :] # onehot
-        
+        labels[test_idx_reorder, :] = labels[test_idx_range, :] # onehot        
      
         classes_num = labels.shape[1]
 
         ###Checking if missing any nodes 
         isolated_list = [i for i in range(labels.shape[0]) if np.all(labels[i] == 0)]
-        if isolated_list:
-            print(f"Warning: Dataset '{dataset_str}' contains {len(isolated_list)} isolated nodes")
+
+
+        if isolated_list: print(f"Warning: Dataset '{dataset_str}' contains {len(isolated_list)} isolated nodes")
         
 
-        if (self.citation_type == 'SemiSuperv1'):
+        print("| # of nodes : {}".format(adj.shape[0]))
+        print("| # of edges : {}".format(adj.sum().sum()/2))
+
+        if (self.citation_type == 'SemiSupervised'):
+
+
+            ##### Creating a variable to save the values before normalizing 
+            adj_unnorm =  adj
+            features_unnorm = features
+            label_unnorm = labels
         
 
-            print("Load semi-supervised task.")
+            print("*******Loading Semi-Supervised Data******")
 
-            ### For GCN 
+            ### Creating the adjacency matrix with self loop connections 
+            adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+            adj = adj + sp.eye(adj.shape[0]) # Add self connections
+
+            ### Conversion of data to tuple representation 
             # https://github.com/LeeWooJung/GCN_reproduce
             features = nontuple_preprocess_features(features)
-            features = torch.FloatTensor(features.todense())
-
-            adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)###This was added for grand archi
-            adj = adj + sp.eye(adj.shape[0]) # Add self connections
             adj = nontuple_preprocess_features(adj)
+
+            ### Conversion of sparse data to torch tensor 
             adj = sparse_mx_to_torch_sparse_tensor(adj)
 
+            
 
+            
 
-            labels = torch.LongTensor(labels)
-            # idx_test = test_idx_range.tolist()
-            # labels = torch.LongTensor(np.argmax(labels, -1))
-
+            ##### To obtain the indexes and base labels based on the y from data 
             train_idx = range(y.shape[0])
             val_idx = range(y.shape[0], y.shape[0]+500)
 
-            ##### do all the preprocessing of feature and adj here 
+            ##### To obtain the indexes based on the mask logic  
 
-            train_idx = torch.LongTensor(train_idx)
-            val_idx = torch.LongTensor(val_idx)
-            test_idx = torch.LongTensor(test_idx_range)
-
-            print("| # of features : {}".format(features.shape[1]))
-            print("| # of clases   : {}".format(ally.shape[1]))
-
-            print("| # of train set : {}".format(len(train_idx)))
-            print("| # of val set   : {}".format(len(val_idx)))
-            print("| # of test set  : {}".format(len(test_idx)))
-
-            setattr(self, dataset_str+'_adjlist'    , adj)
-            setattr(self, dataset_str+'_features'   , features)
-            setattr(self, dataset_str+'_label'     , labels)
-            setattr(self, dataset_str+'_train_idx'       , train_idx)
-            setattr(self, dataset_str+'_val_idx'      , val_idx)
-            setattr(self, dataset_str+'_test_idx', test_idx)
-            setattr(self, dataset_str+ '_classes_num',classes_num)
-
-        elif self.citation_type == 'SemiSuperv2':
-            
-            print("Load semi-supervised task.")
-
-            
-        
-            labels = np.array([np.argmax(row) for row in labels], dtype=np.long)  
+            labels_ = np.array([np.argmax(row) for row in label_unnorm], dtype=np.long)  
             idx_test = test_idx_range.tolist()     
             idx_train = range(len(y))
             idx_val = range(len(y), len(y)+500)
+            train_mask = self.sample_mask(idx_train, labels_.shape[0])
+            val_mask = self.sample_mask(idx_val, labels_.shape[0])
+            test_mask = self.sample_mask(idx_test, labels_.shape[0])
+            y_train = labels_[train_mask]
+            y_val = labels_[val_mask]
+            y_test = labels_[test_mask]
 
-            ##### Creating a variable to save the values before normalizing  
 
-            adj_unnorm =  adj
-            features_unnorm = features
+            ### to obtain the edge details  of the graph
+            edge_idx ,edge_weight = adj_list_from_dict(graph)
+            edge_idx_loop = add_self_loops(edge_idx, features.shape[1])
+            graph = nx.from_dict_of_lists(graph)
+            edges = graph.edges()
 
-            ####Normalising the adjacency matrix and features 
-            adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
-            adj = adj + sp.eye(adj.shape[0]) # Add self connections
-            adj = nontuple_preprocess_features(adj)
+            ##### Conversion of all the data into tensor format  
+            ### Conversion of feature data to tensor format 
+            features = torch.FloatTensor(features.todense())
+
             
 
-            features = nontuple_preprocess_features(features)           
-
-
-            train_mask = self.sample_mask(idx_train, labels.shape[0])
-            val_mask = self.sample_mask(idx_val, labels.shape[0])
-            test_mask = self.sample_mask(idx_test, labels.shape[0])
-
-            y_train = labels[train_mask]
-            y_val = labels[val_mask]
-            y_test = labels[test_mask]
-
-            ##Passing the data to the tensor 
-            features = torch.FloatTensor(features.todense())
-            adj = sparse_mx_to_torch_sparse_tensor(adj)
-
-            ###optional check 
-            # idx_train = torch.LongTensor(idx_train)
-            # idx_val = torch.LongTensor(idx_val)
-            # idx_test = torch.LongTensor(idx_test)
+            labels = torch.LongTensor(labels)
+            train_idx = torch.LongTensor(train_idx)
+            val_idx = torch.LongTensor(val_idx)
+            test_idx = torch.LongTensor(test_idx_range)
             degree = torch.LongTensor(degree)
 
-            ### to obtain the edges of the graph 
-            edge_list = adj_list_from_dict(graph)
-            edge_list = add_self_loops(edge_list, features.size(0))
+            y_train = (torch.from_numpy(y_train)).long()
+            y_val = (torch.from_numpy(y_val)).long()
+            y_test = (torch.from_numpy(y_test)).long()
+            # train_mask = (torch.from_numpy(train_mask)).long()
+            # val_mask = (torch.from_numpy(val_mask)).long()
+            # test_mask = (torch.from_numpy(test_mask)).long()
 
-
+            
+            
+            print("| # of train set : {}".format(len(train_idx)))
+            print("| # of val set   : {}".format(len(val_idx)))
+            print("| # of test set  : {}".format(len(test_idx)))
             print("| # of features : {}".format(features.shape[1]))
-            print("| # of clases   : {}".format(classes_num))
-            print("| # of train set : {}".format(len(y_train)))
-            print("| # of val set   : {}".format(len(y_val)))
-            print("| # of test set  : {}".format(len(y_test)))
+            print("| # of clases   : {}".format(classes_num))            
             print("| # of degree  : {}".format(len(degree)))
-            print("| # of edges  : {}".format((edge_list.shape)))
+            print("| # of edges  : {}".format((edge_idx.shape)))
+            print("| # of edges with loop  : {}".format((edge_idx_loop.shape)))
+
 
 
             setattr(self, dataset_str+'_adjlist'    , adj)
             setattr(self, dataset_str+'_features'   , features)
+            setattr(self, dataset_str+'_train_idx'       , train_idx)
+            setattr(self, dataset_str+'_val_idx'      , val_idx)
+            setattr(self, dataset_str+'_test_idx', test_idx)
+            setattr(self, dataset_str+'_degree'    , degree)
+
+
             setattr(self, dataset_str+'_ytrain'     , y_train)
             setattr(self, dataset_str+'_yval'       , y_val)
             setattr(self, dataset_str+'_ytest'      , y_test)
@@ -253,10 +247,15 @@ class Graph_data(Dataset):
             setattr(self, dataset_str+'_trainmask'  , train_mask)
             setattr(self, dataset_str+'_valmask'    , val_mask)
             setattr(self, dataset_str+'_testmask'   , test_mask)
-            setattr(self, dataset_str+'_edgelist'   , edge_list)
             setattr(self, dataset_str+'_adjunnorm'    , adj_unnorm)
             setattr(self, dataset_str+'_featuresunnorm'    , features_unnorm)
-            setattr(self, dataset_str+'_edge_list'    , edge_list)
+            setattr(self, dataset_str+'_edges'    , edges)
+            setattr(self, dataset_str+'_edge_idx'    , edge_idx)
+            setattr(self, dataset_str+'_edge_idx_loop'    , edge_idx_loop)
+            setattr(self, dataset_str+'_labels'    , labels)
+            setattr(self, dataset_str+'_labelsunorm'    , labels_)
+            setattr(self, dataset_str+'_edge_weight'    , edge_weight)
+            
 
         elif self.citation_type == 'Fullsuper' :
         
@@ -330,13 +329,18 @@ class Graph_data(Dataset):
 
 if __name__ == "__main__":
 
-    datasetpath = "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\GCN\\config\\gcn_cora.yaml"
-    dataset = "citeseer"
-    citation = 'SemiSuperv2'
-    coradata = Graph_data(datasetpath,dataset,citation)#adj_train=False)
-    coradata.load_data()
+    # datasetpath = "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\GCN\\config\\gcn_cora.yaml"
+    # dataset = "citeseer"
+    # citation = 'SemiSuperv2'
+    # coradata = Graph_data(datasetpath,dataset,citation)#adj_train=False)
+    # coradata.load_data()
 
+    configs = load_yamlcfg(config_file='E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC_XAI_V2\\GCN\\config\\gcn_cora.yaml')
 
+    train_datapath = configs['Data']['datapath']
+    data_type = configs['Data']['datatype']
+    citedata = Graph_data(train_datapath,data_type,'SemiSupervised')
+    citedata.load_data()
 
     classnames = {
         'citeseer': ['Agents', 'AI', 'DB', 'IR', 'ML', 'HCI'],
@@ -345,12 +349,13 @@ if __name__ == "__main__":
     }
 
 
-    features = (getattr(coradata, dataset+'_features'))#.to(device)
-    print(features)
-    adj =(getattr(coradata, dataset+'_adjlist'))
-    edge_list=(getattr(coradata, dataset+'_edgelist'))
-    labels=(getattr(coradata, dataset+'_labels'))
-    train_idx =(getattr(coradata, dataset+'_train_idx'))
-    val_idx=(getattr(coradata, dataset+'_val_idx'))
-    test_idx=(getattr(coradata, dataset+'_test_idx'))
+    adj = getattr(citedata, data_type+'_adjlist')
+    features = getattr(citedata, data_type+'_features')
+    y_train = getattr(citedata, data_type+'_ytrain')
+    y_val = getattr(citedata, data_type+'_yval')
+    y_test = getattr(citedata, data_type+'_ytest')
+    train_mask = getattr(citedata, data_type+'_trainmask')
+    val_mask = getattr(citedata, data_type+'_valmask')
+    test_mask = getattr(citedata, data_type+'_testmask')  
+    n_class = getattr(citedata,data_type+ '_classes_num')
     

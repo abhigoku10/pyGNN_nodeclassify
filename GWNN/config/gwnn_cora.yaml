@@ -1,71 +1,38 @@
-# Config format schema number
-format_version: 4
 
-###################
-## Model options
-model_params:
-  model_architecture: "gwnn"
-  input_dim: 1433
-  hidden: 16
-  dropout: 0.5
-  nb_heads: 20
-  alpha: 0.2
+---
 
 
-###################
-## Dataset options
-dataset_params:
-  dataset_type: "cora"
-  save_results: "gwnn_cora/detect"
-  
+
+# -------------------------------------------------------------------
+    Data:         # Use Cora dataset training model
+        datatype:           'cora'  # Type of the citation data 
+        save_results:       "gwnn_cora/detect" # Folder name to save the results 
+        datapath :          "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC_XAI_V2\\src\\dataset\\citation_pre\\"   #Input data path for loading data
+        model_save_path:    "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC_XAI_V2\\weights"  # Path to save the weight file 
+        save_fig:           True  # Saving of the training and validation plot  
+        output_viz:         True  # saving the results output     
+# -------------------------------------------------------------------
+    random_state :      42           # random seed
+    'gwnn' :                         # dropedge parameter
+        type :             'gwnn'               # type of base network
+    Model :  
+        type:           'gwnn'                       # model parameters
+        use_bn :        false          # whether to use batch normalization
+        dropout :       0.5            # dropout ratio
+        input_dim :     1433           # node feature dimensions
+        hidden_dim :    16             # hidden layer output characteristic dimension
+        output_dim :    7              # number of nodes category
+        approximation_order: 4
+        scale:    1.0 #Scaling parameter. Default is 1.0.
+        threshold:    0.0001 #Sparsification parameter. Default is 1e-4.
+        fastmode:   True #args.fast #args.fast
+        
+    Hyper :                         # training hyperparameter
+        LR :            0.001           # optimizer initial learning rate
+        epochs :        4          # training rounds
+        Patience :      800            # stopped early rounds
+        weight_decay :  0.0005         # optimizer weight decay
+        batch_size:     8             # batch size for dataloading 
 
 
-###################
-## Data_loader options
-train_data_loader:
-  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
-  imageset: "train"
-  return_ref: True
-  batch_size: 2
-  shuffle: True
-  num_workers: 2
-
-val_data_loader:
-  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
-  imageset: "val"
-  return_ref: True
-  batch_size: 2
-  shuffle: False
-  num_workers: 4
-
-
-test_data_loader:
-  data_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\src\\dataset\\citation_pre\\"
-  imageset: "val"
-  return_ref: True
-  batch_size: 1
-  shuffle: False
-  num_workers: 4
-
-
-###################
-## Train params
-train_params:
-  model_load_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
-  model_save_path: "E:\\Freelance_projects\\GNN\\Tuts\\pyGNN\\weights\\"
-  checkpoint_every_n_steps: 100
-  max_num_epochs: 400
-  patience: 100
-  lr_rate: 0.001
-  seed: 42  
-  validationmode: False
-  weight_decay: 0.0005 
-  save_fig: True 
-  save_log: True
-###################
-## Test params
-test_params:
-  model_load_path: "E:\\Freelance_projects\\GNN\\Tuts\\GNN_Tuts\\weigths\\"
-  model_save_path: "E:\\Freelance_projects\\GNN\\Tuts\\GNN_Tuts\\weigths\\"
-  output_viz: True
- 
+...

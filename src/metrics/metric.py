@@ -5,6 +5,21 @@ import numpy as np
 from sklearn.metrics import classification_report
 
 
+##### Calculation of the accuracy of the model 
+def accuracy(output, labels):
+    r"""Computes the accuracy of correct predictions.
+
+    Args:
+        output (array): The predictions.
+        labels (array): The targets.
+
+    :rtype: int
+    """
+    preds = output.max(1)[1].type_as(labels)
+    correct = preds.eq(labels).double()
+    correct = correct.sum()
+    return correct / len(labels)
+
 def classify (output,labels,classnames):
     '''
     https://github.com/imayachita/Graph_Convolutional_Networks_Node_Classification
@@ -27,7 +42,7 @@ def classify (output,labels,classnames):
     return report
 
 
-def accuracy(pred, target):
+def accuracy_tnsr(pred, target):
     r"""Computes the accuracy of correct predictions.
 
     Args:

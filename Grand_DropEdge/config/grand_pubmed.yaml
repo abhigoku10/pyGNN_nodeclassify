@@ -1,0 +1,34 @@
+---
+
+
+
+# -------------------------------------------------------------------
+
+    Data:         # Use the Citeseer data set to train the model
+        datatype:           'pubmed'
+        save_results:       "grandedge_pubmed/detect"
+        datapath :          "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC\\src\\dataset\\citation_pre\\"
+        model_save_path:    "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC\\weights"
+        save_fig:           True
+        output_viz:         True        
+# -------------------------------------------------------------------
+    random_state :      42           # random seed
+    grand :                         # GRAND parameter
+        S :             2              # Augmentation
+        K :             2              # Order aggregation times
+        D :             0.5            # DropNode ratio
+        T :             0.3            # Temperature control category distribution
+        L :             0.7            # Consistensy Loss coefficient
+    Model :                         # model parameters
+        use_bn :        false          # whether to use batch normalization
+        dropout :       0.5            # dropout ratio
+        input_dim :     1433           # node feature dimensions
+        hidden_dim :    32             # hidden layer output characteristic dimension
+        output_dim :    7              # number of nodes category
+    Hyper :                         # training hyperparameter
+        LR :            0.01           # optimizer initial learning rate
+        epochs :        1000          # training rounds
+        Patience :      200            # stopped early rounds
+        weight_decay : 0.0005         # optimizer weight decay
+
+...

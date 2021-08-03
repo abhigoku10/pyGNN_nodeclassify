@@ -9,8 +9,11 @@ import sys
 sys.path.append(os.getcwd())
 
 from ..layers.adjacency import adjacency_cora,adjacency_images
+
 from ..layers.layers import GraphConvolution , GraphAttentionLayer
+
 from ..layers.layers import SpGraphAttentionLayer
+
 from .. layers.layers import GraphWaveletNeuralNetwork
 
 from .. layers.layers import MeanAggregator,Encoder
@@ -21,7 +24,65 @@ from .. layers.layers import GATconv
 
 from .. layers.layers import SAGEGCN
 
+from torch_geometric.nn import  global_mean_pool
 
+class gcn_3layer(nn.Module):
+    '''
+     https://github.com/ndey96/GCNN-Explainability
+    '''
+    def __init__(self,n_h0,n_h1,n_h2,n_h3,batch_size):
+        super(gcn_3layer,self).__init__()
+
+        #explainability 
+        self.input= None
+        self.final_conv_grads=None
+        self.final_conv_act= None
+
+        self.conv1 = GraphConvolution(n_h0,n_h1)
+        self.conv2 = GraphConvolution(n_h1, n_h2)
+        self.conv3 = GraphConvolution(n_h2,n_h3)
+        self.fc1 =  torch.nn.Linear(n_h3,1)
+
+        # self.bs = batch_size.type_as(torch.dtype)
+        self.bs = batch_size
+
+    def activations_hook(self,grad):
+        self.final_conv_grads = grad
+
+    def forward(self,x,adj):
+        h0 = x 
+        h0.requires_grad = True
+        self.input = h0
+        h1= F.relu(self.conv1(h0,adj))
+        h2 = F.relu(self.conv2(h1,adj))
+
+        with torch.enable_grad():
+            self.final_conv_act = self.conv3(h2,adj)
+        self.final_conv_act.register_hook(self.activations_hook)
+
+        h3 = F.relu(self.final_conv_act)
+        # h4 = global_mean_pool(h3,self.bs)
+        # out = torch.nn.Sigmoid()(self.fc1(h3))
+        
+        
+        out = torch.nn.Softmax()(self.fc1(h3))
+        # out = F.log_softmax(self.fc1(h3), dim=1)
+
+        return out
+
+
+class SGC(nn.Module):
+    """
+    A Simple PyTorch Implementation of Logistic Regression.
+    Assuming the features have been preprocessed with k-step graph propagation.
+    """
+    def __init__(self, nfeat, nclass):
+        super(SGC, self).__init__()
+
+        self.W = nn.Linear(nfeat, nclass)
+
+    def forward(self, x):
+        return self.W(x)
 class GraphSAGE(nn.Module):
 
     def __init__(self, input_dim, hidden_dims=[64, 64],num_neighbors_list=[10, 10]):
@@ -95,12 +156,12 @@ class gat_all(nn.Module):
         for att in self.out_atts:
             att.reset_parameters()
 
-    def forward(self,x,edge_list):
-        x = torch.cat([att(x,edge_list)for att in self.attentions],dim=1)
+    def forward(self,x,edge_index):
+        x = torch.cat([att(x,edge_index)for att in self.attentions],dim=1)
 
         x = F.elu(x)
 
-        x= torch.sum(torch.stack([att(x,edge_list)for att in self.out_atts]),dim=0)/ len(self.out_atts)
+        x= torch.sum(torch.stack([att(x,edge_index)for att in self.out_atts]),dim=0)/ len(self.out_atts)
 
         return F.log_softmax(x,dim=1)
 
@@ -182,9 +243,6 @@ class gwnn(nn.Module):
         output_2 = self.conv2(output_1)
         pred =  F.log_softmax(output_2,dim=1)
         return pred 
-
-
-
 class graphsage_sup(nn.Module):
 
     def __init__(self, num_classes, enc):
@@ -256,6 +314,9 @@ class gcn_tkipf(nn.Module):
         self.gc1 = GraphConvolution(nfeat, nhid)
         self.gc2 = GraphConvolution(nhid, nclass)
         self.dropout = dropout
+
+    def activations_hook(self, grad):
+        self.final_conv_grads = grad
 
     def forward(self, x, adj):
         x = F.relu(self.gc1(x, adj))

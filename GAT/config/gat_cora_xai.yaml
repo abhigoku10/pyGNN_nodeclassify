@@ -1,0 +1,48 @@
+---
+
+
+
+# -------------------------------------------------------------------
+    Data:         # Use Cora dataset training model
+        datatype:           'cora'              # To provide the type of data to load 
+        save_results:       "gat_cora/detect"          #provide path to save the results 
+        datapath :          "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC_XAI_V2\\src\\dataset\\citation_pre\\"   # to provide dataset loading path 
+        model_save_path:    "E:\\Freelance_projects\\GNN\\Tutsv2\\pyGNN_NC_XAI_V2\\weights"    # To provide the model save path 
+        save_fig:           True        # To save the figure option 
+        output_viz:         True        #  To display the output option         
+# -------------------------------------------------------------------
+    random_state :      42              # random seed
+    gat :                               # dropedge parameter
+        type :             'gat'        # type of base network 
+        
+    Model :                             # model parameters
+        use_bn :        false           # whether to use batch normalization
+        dropout :       0.5             # dropout ratio
+        input_dim :     1433            # node feature dimensions
+        hidden_dim :    128             # hidden layer output characteristic dimension
+        output_dim :    7               # number of nodes category
+        nbheads:   8
+        
+
+    Hyper :                         # training hyperparameter
+        LR :            0.005       # optimizer initial learning rate
+        epochs :        4       # training rounds
+        Patience :      800         # stopped early rounds
+        weight_decay : 0.0005       # optimizer weight decay
+        dropout:    0.8             # Dropout parameter 
+        alpha:   0.2                # alpha value
+    XAI :
+      xai_type: LIME
+      test_samples: 20           #number of test samples
+      num_noise:  10              #number of noise features to add
+      hop:  2
+      rho:  0.19
+      K: 250                      #top-K most importance features  
+      masks_epochs: 200           #epochs for training a GNNExplainer
+      masks_lr: 0.01              #learning rate for training GNNExplainer
+      masks_threshold:  0.167     #threshold of features for GNNExplainer
+      lime_samples: 10            #generate samples for LIME
+      greedy_threshold: 0.01      #threshold of features for Greedy
+      ymax: 1.5                   #max of y-axis
+
+...
