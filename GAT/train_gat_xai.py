@@ -15,7 +15,7 @@ import torch.nn as nn
 import sys
 import os
 sys.path.append(os.getcwd())
-os.environ['CUDA_LAUNCH_BLOCKING']="1"
+# os.environ['CUDA_LAUNCH_BLOCKING']="1"
 
 
 #### We import custom functions 
